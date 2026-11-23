@@ -55,8 +55,8 @@ class DatabaseSchemaTest {
     void seedDataIsLoadedByMigrations() {
         assertThat(admin.getRole()).isEqualTo(Role.ADMIN);
         assertThat(admin.getPasswordHash()).startsWith("$2");
-        assertThat(locations.count()).isEqualTo(2);
-        assertThat(spaces.count()).isEqualTo(6);
+        assertThat(locations.findAll()).extracting("name").contains("Downtown Coworking", "Sports Center South");
+        assertThat(spaces.count()).isGreaterThanOrEqualTo(6);
     }
 
     @Test

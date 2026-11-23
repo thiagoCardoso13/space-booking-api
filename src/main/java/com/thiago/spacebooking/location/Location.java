@@ -43,6 +43,14 @@ public class Location {
         this.closesAt = closesAt;
     }
 
+    public void update(String name, String address, String city, LocalTime opensAt, LocalTime closesAt) {
+        this.name = name;
+        this.address = address;
+        this.city = city;
+        this.opensAt = opensAt;
+        this.closesAt = closesAt;
+    }
+
     public UUID getId() {
         return id;
     }

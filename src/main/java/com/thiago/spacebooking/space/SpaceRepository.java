@@ -1,10 +1,14 @@
 package com.thiago.spacebooking.space;
 
-import java.util.List;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
-public interface SpaceRepository extends JpaRepository<Space, UUID> {
+public interface SpaceRepository extends JpaRepository<Space, UUID>, JpaSpecificationExecutor<Space> {
 
-    List<Space> findByLocationId(UUID locationId);
+    boolean existsByLocationId(UUID locationId);
+
+    boolean existsByLocationIdAndName(UUID locationId, String name);
+
+    boolean existsByLocationIdAndNameAndIdNot(UUID locationId, String name, UUID id);
 }

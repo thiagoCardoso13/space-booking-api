@@ -142,7 +142,7 @@ Time zones: store everything in UTC (`timestamptz`) and convert to `Europe/Madri
 
 ## 6. API
 
-Base path: `/api/v1`. Errors follow **RFC 7807** (`application/problem+json`).
+Base path: `/api/v1`. Errors follow **RFC 7807** (`application/problem+json`). List endpoints are paginated (`page`, `size` up to 100, `sort`) and return `content`, `page`, `size`, `totalElements`, `totalPages`.
 
 ### Authentication
 | Method | Route | Access | Description |
@@ -155,9 +155,12 @@ Base path: `/api/v1`. Errors follow **RFC 7807** (`application/problem+json`).
 | Method | Route | Access | Description |
 |---|---|---|---|
 | GET | `/locations` | public | List locations |
-| POST / PUT / DELETE | `/locations[/{id}]` | ADMIN | Manage |
-| GET | `/locations/{id}/spaces` | public | Spaces of a location |
-| POST / PUT / DELETE | `/spaces[/{id}]` | ADMIN | Manage |
+| GET | `/locations/{id}` | public | Location details |
+| POST / PUT / DELETE | `/locations[/{id}]` | ADMIN | Manage. DELETE is refused with `409` while the location has spaces |
+| GET | `/locations/{id}/spaces` | public | Active spaces of a location (filter `type`) |
+| GET | `/spaces?locationId=&type=&city=&active=` | public | Search spaces (paginated, `active=true` by default) |
+| GET | `/spaces/{id}` | public | Space details |
+| POST / PUT / DELETE | `/spaces[/{id}]` | ADMIN | Manage. DELETE deactivates the space (soft delete) so past bookings stay valid |
 | GET | `/spaces/{id}/availability?date=2026-12-01` | public | Free slots for the day |
 
 ### Bookings
@@ -235,9 +238,9 @@ Each phase ends with a verifiable **"done when"** criterion. Total estimate: **a
 - **Done when:** I can log in and call `/users/me` with the token (verified by tests; Swagger arrives in Phase 5).
 
 ### Phase 3: Locations and spaces (2 days)
-- [ ] CRUD for locations and spaces (only ADMIN writes)
-- [ ] Pagination and filters (`type`, `city`)
-- [ ] Controller tests with MockMvc
+- [x] CRUD for locations and spaces (only ADMIN writes)
+- [x] Pagination and filters (`type`, `city`)
+- [x] Controller tests with MockMvc
 - **Done when:** an admin creates a space and a regular user can only list.
 
 ### Phase 4: Bookings and rules (4 days), the core of the project

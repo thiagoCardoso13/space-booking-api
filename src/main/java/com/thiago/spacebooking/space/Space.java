@@ -45,6 +45,12 @@ public class Space {
         this.type = type;
     }
 
+    public void update(String name, SpaceType type, boolean active) {
+        this.name = name;
+        this.type = type;
+        this.active = active;
+    }
+
     public UUID getId() {
         return id;
     }
