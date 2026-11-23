@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # ---- Build stage: compile and package the Spring Boot jar ----
-FROM eclipse-temurin:21-jdk AS build
+FROM eclipse-temurin:25-jdk AS build
 WORKDIR /workspace
 
 # Copy only what Maven needs to resolve dependencies first, so this layer is cached until the POM changes.
@@ -16,7 +16,7 @@ RUN --mount=type=cache,target=/root/.m2 ./mvnw -B -q package -DskipTests -Djacoc
     && java -Djarmode=tools -jar app.jar extract --destination extracted
 
 # ---- Runtime stage: JRE only, non-root user ----
-FROM eclipse-temurin:21-jre-alpine
+FROM eclipse-temurin:25-jre-alpine
 LABEL org.opencontainers.image.source="https://github.com/thiagoCardoso13/space-booking-api" \
       org.opencontainers.image.description="REST API to book meeting rooms, desks and sports courts" \
       org.opencontainers.image.licenses="MIT"
