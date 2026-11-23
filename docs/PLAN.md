@@ -138,7 +138,7 @@ API returns `409 Conflict`. This becomes a **concurrency test** and a strong par
 
 Violations of R1, R3, R5, R6, R7, R9 and R10 return `422` with a `rule` property (e.g. `"rule": "R6"`). R4 returns `409`. Cancelling an already cancelled booking is a no-op (`204`). Deactivating a space does not cancel its future bookings: they stay valid. `startsAt` accepts UTC (`...T09:00:00Z`) or an offset with seconds (`...T10:00:00+01:00`).
 
-Concurrency: R4 is enforced by the database constraint. R7 is enforced by locking the user's row while counting and inserting, so parallel requests from one user cannot exceed the limit (verified by tests that fail without the lock).
+Concurrency: R4 is enforced by the database constraint. Creating a booking first locks the space row and then the user row (always in that order, so requests can never wait on each other in a cycle). The space lock queues concurrent bookings of the same space, so the loser fails cleanly with `409`; without it PostgreSQL aborts some of the colliding inserts with `deadlock detected` after a 1 second delay, which showed up as `500` errors on the CI runner. The user lock keeps R7 safe for parallel requests of one user. A retry wrapper (`BookingCreationService`) remains as a safety net for any other lock failure. Tests fire parallel requests at the same slot and fail without these locks.
 
 Time zones: store everything in UTC (`timestamptz`) and convert to `Europe/Madrid` at the edge. Opening hours (`opens_at`, `closes_at`) are interpreted in `Europe/Madrid` for the MVP.
 

@@ -46,7 +46,11 @@ public class BookingService {
     }
 
     public Booking create(UUID userId, BookingRequest request) {
-        Space space = spaces.findById(request.spaceId()).orElseThrow(() -> new ResourceNotFoundException("Space not found."));
+        // Lock order is always space first, then user, so two requests can never wait for each other in a cycle.
+        // The space lock queues concurrent bookings of the same space: the loser then finds the winner's row and fails
+        // cleanly on the exclusion constraint, instead of both colliding inside it and deadlocking.
+        Space space = spaces.findByIdForUpdate(request.spaceId())
+                .orElseThrow(() -> new ResourceNotFoundException("Space not found."));
         policy.checkSlot(space, request.startsAt()).ifPresent(BookingService::reject);
 
         // The user row lock serializes this user's concurrent bookings, so the R7 limit cannot be exceeded

@@ -35,9 +35,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class BookingController {
 
     private final BookingService bookingService;
+    private final BookingCreationService bookingCreationService;
 
-    public BookingController(BookingService bookingService) {
+    public BookingController(BookingService bookingService, BookingCreationService bookingCreationService) {
         this.bookingService = bookingService;
+        this.bookingCreationService = bookingCreationService;
     }
 
     @Operation(summary = "Book a slot", description = "The booking lasts 60 minutes from `startsAt`, which must be on the full hour. Any offset is accepted (`2030-01-16T10:00:00+01:00`).")
@@ -46,7 +48,7 @@ public class BookingController {
     @ApiResponse(responseCode = "422", description = "Business rule violated: see the `rule` property (R1, R3, R5, R6, R7, R10)")
     @PostMapping("/bookings")
     public ResponseEntity<BookingResponse> create(@Valid @RequestBody BookingRequest request, Authentication authentication) {
-        Booking booking = bookingService.create(CurrentUser.of(authentication).id(), request);
+        Booking booking = bookingCreationService.create(CurrentUser.of(authentication).id(), request);
         return ResponseEntity.created(URI.create("/api/v1/bookings/" + booking.getId())).body(BookingResponse.from(booking));
     }
 

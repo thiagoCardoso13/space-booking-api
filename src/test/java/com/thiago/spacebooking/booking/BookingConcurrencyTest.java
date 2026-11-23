@@ -60,6 +60,31 @@ class BookingConcurrencyTest {
                 .andExpect(jsonPath("$.totalElements").value(1));
     }
 
+    /**
+     * PostgreSQL can abort one of several concurrent inserts that fight over the same range with "deadlock detected"
+     * while checking the exclusion constraint. That must never reach the client as a server error: every request has
+     * to end as either 201 (the winner) or 409 (a lost slot). Repeated rounds make the interleaving visible.
+     */
+    @Test
+    void repeatedContentionOverTheSameSlotNeverProducesAServerError() throws Exception {
+        String admin = TestAuth.adminToken(mvc);
+        String spaceId = TestData.newSpace(mvc, admin);
+
+        for (int round = 0; round < 8; round++) {
+            Instant slot = at(1 + round / 4, 8 + round % 4);
+            List<String> tokens = new ArrayList<>();
+            for (int i = 0; i < 10; i++) {
+                tokens.add(TestAuth.userToken(mvc));
+            }
+
+            List<Integer> statuses = runAtTheSameTime(tokens.stream()
+                    .<Callable<Integer>>map(token -> () -> postBooking(token, spaceId, slot)).toList());
+
+            assertThat(statuses).as("statuses in round %d", round).allMatch(s -> s == 201 || s == 409);
+            assertThat(statuses.stream().filter(s -> s == 201)).as("winners in round %d", round).hasSize(1);
+        }
+    }
+
     @Test
     void oneUserSendingParallelRequestsCannotExceedTheActiveBookingLimit() throws Exception {
         String admin = TestAuth.adminToken(mvc);
