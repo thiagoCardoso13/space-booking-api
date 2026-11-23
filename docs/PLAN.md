@@ -271,10 +271,11 @@ Each phase ends with a verifiable **"done when"** criterion. Total estimate: **a
 - **Notes:** the image defaults to the `prod` profile so a forgotten variable fails loudly instead of running with the public development secret; compose opts into a `local` profile explicitly. Tests are not run inside the image build (they need Docker for Testcontainers); CI runs them.
 
 ### Phase 7: CI/CD (1 day)
-- [ ] Workflow: checkout, JDK 21, Maven cache, `verify`, JaCoCo report
-- [ ] Build and push the image to GitHub Container Registry
-- [ ] CI badge in the README
+- [x] Workflow: checkout, JDK 21, Maven cache, `verify` with the coverage gate, JaCoCo report as artifact and a coverage table in the job summary
+- [x] Build the image, smoke test it (prod profile, real PostgreSQL) and push it to GitHub Container Registry only on `main`
+- [x] CI badge in the README
 - **Done when:** a push to `main` runs everything and the badge is green.
+- **Notes:** `.github/scripts/smoke-test.sh <image>` runs the same checks locally. Dependabot watches Maven, GitHub Actions and Docker (Java major bumps are ignored on purpose). Actions are pinned to major versions, not to commit SHAs.
 
 ### Phase 8: Deployment (1-2 days)
 - [ ] Managed Postgres on Neon

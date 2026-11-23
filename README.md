@@ -12,7 +12,7 @@ The hard part is not the CRUD: it is making sure two people can never book the s
 arrive at the same time. That guarantee lives in the database (an exclusion constraint on time ranges), not only in
 application code, and it is covered by a concurrency test.
 
-> 🚧 **Work in progress.** Phases 0-6 are done (setup, database, authentication, locations and spaces, bookings and business rules, quality, Docker). Next: CI/CD and deployment. The full plan, data model, business rules,
+> 🚧 **Work in progress.** Phases 0-7 are done (setup, database, authentication, locations and spaces, bookings and business rules, quality, Docker, CI/CD). Next: deployment. The full plan, data model, business rules,
 > API design and roadmap are in [docs/PLAN.md](docs/PLAN.md).
 
 ## Planned features
@@ -66,6 +66,20 @@ docker compose up -d postgres
 ```bash
 ./mvnw verify
 ```
+
+## CI/CD
+
+Every push and pull request runs the [CI workflow](.github/workflows/ci.yml):
+
+1. **Build and test**: `./mvnw verify` (unit, integration and concurrency tests on a real PostgreSQL) with the JaCoCo coverage gate. The coverage table appears in the job summary and the full report is uploaded as an artifact.
+2. **Docker image**: the image is built for `linux/amd64` and smoke tested before anything is published. The test starts it against a real PostgreSQL with the production profile and checks that it refuses to start without `JWT_SECRET`, that health, Swagger and login work, that logs are JSON and that it does not run as root (`.github/scripts/smoke-test.sh`).
+3. **Publish**: only on pushes to `main`, the tested image goes to the GitHub Container Registry.
+
+```bash
+docker pull ghcr.io/thiagocardoso13/space-booking-api:latest
+```
+
+Dependabot proposes updates for Maven, GitHub Actions and Docker dependencies.
 
 ## Docker image
 
