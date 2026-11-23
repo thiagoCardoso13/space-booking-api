@@ -10,7 +10,8 @@ services:
       POSTGRES_USER: spacebooking
       POSTGRES_PASSWORD: spacebooking # local development only
     ports:
-      - "5432:5432"
+      # Loopback only: the development password must not be reachable from other machines on the network.
+      - "127.0.0.1:5432:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
@@ -33,8 +34,16 @@ services:
       DB_USER: spacebooking
       DB_PASSWORD: spacebooking
     ports:
-      - "8080:8080"
+      - "127.0.0.1:8080:8080"
     restart: unless-stopped
+    # Hardening: nothing to write except /tmp, no extra Linux capabilities, no privilege escalation.
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
 
 volumes:
   postgres-data:

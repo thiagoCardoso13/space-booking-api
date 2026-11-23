@@ -17,6 +17,9 @@ RUN --mount=type=cache,target=/root/.m2 ./mvnw -B -q package -DskipTests -Djacoc
 
 # ---- Runtime stage: JRE only, non-root user ----
 FROM eclipse-temurin:21-jre-alpine
+LABEL org.opencontainers.image.source="https://github.com/thiagoCardoso13/space-booking-api" \
+      org.opencontainers.image.description="REST API to book meeting rooms, desks and sports courts" \
+      org.opencontainers.image.licenses="MIT"
 WORKDIR /app
 
 RUN addgroup -S -g 10001 app && adduser -S -u 10001 -G app app
