@@ -279,7 +279,7 @@ Each phase ends with a verifiable **"done when"** criterion. Total estimate: **a
 
 ### Phase 8: Deployment (1-2 days)
 - [ ] Managed Postgres on Neon
-- [ ] Image deployment on Render, environment variables, `/actuator/health` as health check
+- [ ] Image deployment on Render, environment variables, `/actuator/health/liveness` as health check (it does not query the database, so it does not keep Neon awake)
 - [ ] Automatic deploy after CI passes
 - [ ] Demo data and a test user documented; rotate the seeded demo admin password (`V3__seed_demo_data.sql` is demo-only)
 - **Status:** the guide ([DEPLOY.md](DEPLOY.md)) and the verification script are done and tested locally; the actual deployment needs the owner's Render and Neon accounts.
