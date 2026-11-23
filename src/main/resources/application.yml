@@ -28,3 +28,14 @@ app:
     max-advance-days: 14
     max-active-bookings-per-user: 3
     min-cancel-notice: 2h
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: never

@@ -1,5 +1,10 @@
 package com.thiago.spacebooking.location;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import com.thiago.spacebooking.config.OpenApiConfig;
 import com.thiago.spacebooking.common.PageResponse;
 import com.thiago.spacebooking.space.SpaceResponse;
 import com.thiago.spacebooking.space.SpaceService;
@@ -19,6 +24,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+@Tag(name = "Locations")
 @RestController
 @RequestMapping("/api/v1/locations")
 public class LocationController {
@@ -31,17 +37,20 @@ public class LocationController {
         this.spaceService = spaceService;
     }
 
+    @Operation(summary = "List locations", description = "Public and paginated. Filter by `city` (case-insensitive).")
     @GetMapping
     public PageResponse<LocationResponse> list(@RequestParam(required = false) String city,
             @PageableDefault(size = 20, sort = "name") Pageable pageable) {
         return PageResponse.from(locationService.search(city, pageable), LocationResponse::from);
     }
 
+    @Operation(summary = "Get a location")
     @GetMapping("/{id}")
     public LocationResponse get(@PathVariable UUID id) {
         return LocationResponse.from(locationService.get(id));
     }
 
+    @Operation(summary = "List the active spaces of a location")
     @GetMapping("/{id}/spaces")
     public PageResponse<SpaceResponse> spaces(@PathVariable UUID id,
             @RequestParam(required = false) com.thiago.spacebooking.space.SpaceType type,
@@ -50,6 +59,8 @@ public class LocationController {
         return PageResponse.from(spaceService.search(id, type, null, true, pageable), SpaceResponse::from);
     }
 
+    @Operation(summary = "Create a location (admin)", security = @SecurityRequirement(name = OpenApiConfig.BEARER))
+    @ApiResponse(responseCode = "422", description = "closesAt must be after opensAt")
     @PostMapping
     public ResponseEntity<LocationResponse> create(@Valid @RequestBody LocationRequest request) {
         Location location = locationService.create(request);
@@ -57,11 +68,13 @@ public class LocationController {
                 .body(LocationResponse.from(location));
     }
 
+    @Operation(summary = "Update a location (admin)", security = @SecurityRequirement(name = OpenApiConfig.BEARER))
     @PutMapping("/{id}")
     public LocationResponse update(@PathVariable UUID id, @Valid @RequestBody LocationRequest request) {
         return LocationResponse.from(locationService.update(id, request));
     }
 
+    @Operation(summary = "Delete a location (admin)", description = "Refused with 409 while the location still has spaces.", security = @SecurityRequirement(name = OpenApiConfig.BEARER))
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
         locationService.delete(id);

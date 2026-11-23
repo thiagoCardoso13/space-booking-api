@@ -71,6 +71,17 @@ class BookingApiTest {
     }
 
     @Test
+    void startsAtAcceptsOffsetNotationAndIsStoredAsTheSameInstant() throws Exception {
+        Instant start = at(1, 10); // 10:00 Madrid
+        String madridOffset = java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(start.atZone(TestData.MADRID)); // e.g. 2030-01-16T10:00:00+01:00
+
+        mvc.perform(post("/api/v1/bookings").header("Authorization", alice).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"spaceId\":\"%s\",\"startsAt\":\"%s\"}".formatted(spaceId, madridOffset)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.startsAt").value(start.toString()));
+    }
+
+    @Test
     void creatingRequiresAuthentication() throws Exception {
         mvc.perform(post("/api/v1/bookings").contentType(MediaType.APPLICATION_JSON).content(bookingBody(spaceId, at(1, 10))))
                 .andExpect(status().isUnauthorized());

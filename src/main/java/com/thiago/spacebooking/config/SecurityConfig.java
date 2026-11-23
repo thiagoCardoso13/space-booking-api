@@ -39,6 +39,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/v1/auth/**").permitAll()
                         .requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
+                        .requestMatchers("/v3/api-docs", "/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/locations/**", "/api/v1/spaces/**").permitAll()
                         .requestMatchers("/api/v1/locations/**", "/api/v1/spaces/**", "/api/v1/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated())

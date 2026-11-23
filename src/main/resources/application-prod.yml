@@ -1,0 +1,5 @@
+# Structured (JSON, Elastic Common Schema) logs for the production profile, easy to ingest by log platforms.
+logging:
+  structured:
+    format:
+      console: ecs

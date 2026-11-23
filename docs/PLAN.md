@@ -136,7 +136,7 @@ API returns `409 Conflict`. This becomes a **concurrency test** and a strong par
 | R9 | Minimum notice to cancel (admins are exempt) | at least 2 h before |
 | R10 | Inactive spaces do not accept bookings | |
 
-Violations of R1, R3, R5, R6, R7, R9 and R10 return `422` with a `rule` property (e.g. `"rule": "R6"`). R4 returns `409`. Cancelling an already cancelled booking is a no-op (`204`).
+Violations of R1, R3, R5, R6, R7, R9 and R10 return `422` with a `rule` property (e.g. `"rule": "R6"`). R4 returns `409`. Cancelling an already cancelled booking is a no-op (`204`). Deactivating a space does not cancel its future bookings: they stay valid. `startsAt` accepts UTC (`...T09:00:00Z`) or an offset with seconds (`...T10:00:00+01:00`).
 
 Concurrency: R4 is enforced by the database constraint. R7 is enforced by locking the user's row while counting and inserting, so parallel requests from one user cannot exceed the limit (verified by tests that fail without the lock).
 
@@ -256,10 +256,10 @@ Each phase ends with a verifiable **"done when"** criterion. Total estimate: **a
 - **Done when:** every rule has a passing test and the concurrency test is stable.
 
 ### Phase 5: Quality (2 days)
-- [ ] Integration tests with **Testcontainers** (real Postgres)
-- [ ] JaCoCo coverage (target at least 80% on `service` and `booking`)
-- [ ] Springdoc: examples, descriptions and Bearer security scheme
-- [ ] Structured logs and Actuator `/health`
+- [x] Integration tests with **Testcontainers** (real Postgres)
+- [x] JaCoCo coverage (the build fails below 85% overall or 90% in `booking`; currently about 98%)
+- [x] Springdoc: examples, descriptions and Bearer security scheme
+- [x] Structured logs and Actuator `/health`
 - **Done when:** `./mvnw verify` runs everything and the coverage report is generated.
 
 ### Phase 6: Docker (1 day)
