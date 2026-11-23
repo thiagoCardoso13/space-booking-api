@@ -5,6 +5,7 @@ import com.thiago.spacebooking.common.ConflictException;
 import com.thiago.spacebooking.common.ResourceNotFoundException;
 import com.thiago.spacebooking.space.SpaceRepository;
 import java.util.UUID;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -54,7 +55,13 @@ public class LocationService {
         if (spaces.existsByLocationId(id)) {
             throw new ConflictException("The location still has spaces. Deactivate or remove them first.");
         }
-        locations.delete(location);
+        try {
+            locations.delete(location);
+            locations.flush();
+        } catch (DataIntegrityViolationException e) {
+            // A space was created between the check above and the delete: the foreign key decides.
+            throw new ConflictException("The location still has spaces. Deactivate or remove them first.");
+        }
     }
 
     private void validateHours(LocationRequest request) {

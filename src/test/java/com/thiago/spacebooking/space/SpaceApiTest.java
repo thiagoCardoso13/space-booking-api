@@ -126,8 +126,12 @@ class SpaceApiTest {
 
         mvc.perform(get("/api/v1/spaces").param("locationId", locationId))
                 .andExpect(jsonPath("$.totalElements").value(0));
-        mvc.perform(get("/api/v1/spaces").param("locationId", locationId).param("active", "false"))
+        mvc.perform(get("/api/v1/spaces").header("Authorization", admin).param("locationId", locationId).param("active", "false"))
                 .andExpect(jsonPath("$.totalElements").value(1));
+        mvc.perform(get("/api/v1/spaces").param("locationId", locationId).param("active", "false"))
+                .andExpect(status().isUnauthorized());
+        mvc.perform(get("/api/v1/spaces").header("Authorization", user).param("locationId", locationId).param("active", "false"))
+                .andExpect(status().isForbidden());
         mvc.perform(get("/api/v1/spaces/" + id))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.active").value(false));

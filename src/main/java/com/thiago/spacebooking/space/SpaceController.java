@@ -1,5 +1,6 @@
 package com.thiago.spacebooking.space;
 
+import com.thiago.spacebooking.common.CurrentUser;
 import com.thiago.spacebooking.common.PageResponse;
 import jakarta.validation.Valid;
 import java.net.URI;
@@ -7,6 +8,8 @@ import java.util.UUID;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -33,7 +36,12 @@ public class SpaceController {
             @RequestParam(required = false) SpaceType type,
             @RequestParam(required = false) String city,
             @RequestParam(defaultValue = "true") boolean active,
-            @PageableDefault(size = 20, sort = "name") Pageable pageable) {
+            @PageableDefault(size = 20, sort = "name") Pageable pageable,
+            Authentication authentication) {
+        if (!active && !CurrentUser.isAdmin(authentication)) {
+            // Anonymous callers get 401 and regular users 403 from the security filter chain.
+            throw new AccessDeniedException("Only admins can list inactive spaces.");
+        }
         return PageResponse.from(spaceService.search(locationId, type, city, active, pageable), SpaceResponse::from);
     }
 
