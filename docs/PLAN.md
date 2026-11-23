@@ -264,10 +264,11 @@ Each phase ends with a verifiable **"done when"** criterion. Total estimate: **a
 - **Review notes:** a test calls every documented operation as a regular user and checks that the OpenAPI document lists a `403` exactly where the security configuration really answers `403`, so the docs cannot drift from the rules.
 
 ### Phase 6: Docker (1 day)
-- [ ] Multi-stage `Dockerfile` (Maven build, slim JRE runtime, non-root user)
-- [ ] Complete `docker-compose.yml` (app + Postgres + healthcheck)
-- [ ] Configuration through environment variables (no secrets in the repository)
+- [x] Multi-stage `Dockerfile` (Maven build, slim JRE runtime, non-root user)
+- [x] Complete `docker-compose.yml` (app + Postgres + healthcheck)
+- [x] Configuration through environment variables (no secrets in the repository)
 - **Done when:** `docker compose up` starts everything from scratch and Swagger opens.
+- **Notes:** the image defaults to the `prod` profile so a forgotten variable fails loudly instead of running with the public development secret; compose opts into a `local` profile explicitly. Tests are not run inside the image build (they need Docker for Testcontainers); CI runs them.
 
 ### Phase 7: CI/CD (1 day)
 - [ ] Workflow: checkout, JDK 21, Maven cache, `verify`, JaCoCo report

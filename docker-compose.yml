@@ -1,3 +1,6 @@
+# Local environment: `docker compose up --build` starts PostgreSQL and the API, then open http://localhost:8080/swagger-ui.html
+# For development with the app running from your IDE or `./mvnw spring-boot:run`, start only the database:
+#   docker compose up -d postgres
 services:
   postgres:
     image: postgres:16-alpine
@@ -5,7 +8,7 @@ services:
     environment:
       POSTGRES_DB: spacebooking
       POSTGRES_USER: spacebooking
-      POSTGRES_PASSWORD: spacebooking
+      POSTGRES_PASSWORD: spacebooking # local development only
     ports:
       - "5432:5432"
     volumes:
@@ -15,6 +18,23 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
+
+  app:
+    build: .
+    container_name: space-booking-api
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      # The image defaults to the "prod" profile (JSON logs, JWT_SECRET mandatory). Locally we use the "local" profile,
+      # which keeps readable logs and the development JWT secret from application.yml. Never deploy it that way.
+      SPRING_PROFILES_ACTIVE: local
+      DB_URL: jdbc:postgresql://postgres:5432/spacebooking
+      DB_USER: spacebooking
+      DB_PASSWORD: spacebooking
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
 
 volumes:
   postgres-data:
