@@ -12,7 +12,7 @@ The hard part is not the CRUD: it is making sure two people can never book the s
 arrive at the same time. That guarantee lives in the database (an exclusion constraint on time ranges), not only in
 application code, and it is covered by a concurrency test.
 
-> 🚧 **Work in progress.** Currently finishing **Phase 1 (database and domain)**: schema, migrations, JPA entities and the no-overlap constraint are done. The full plan, data model, business rules,
+> 🚧 **Work in progress.** Phases 0-2 are done (setup, database and domain, authentication). Next: locations and spaces. The full plan, data model, business rules,
 > API design and roadmap are in [docs/PLAN.md](docs/PLAN.md).
 
 ## Planned features

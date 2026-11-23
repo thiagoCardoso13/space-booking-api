@@ -50,7 +50,7 @@ rules (no overlaps, advance limits, per-user limits, cancellation). Admins manag
 | Framework | **Spring Boot 4.2** | Web, Data JPA, Security, Validation |
 | Database | **PostgreSQL 16** | `tstzrange` + exclusion constraint (section 4) |
 | Migrations | **Flyway** | Versioned schema, no `ddl-auto=update` |
-| Auth | **Spring Security + JWT** | Access token only (1-2 h), no refresh token |
+| Auth | **Spring Security + JWT** | HS256 via Spring's Nimbus support (no extra JWT library), access token only (1 h), no refresh token |
 | Docs | **springdoc-openapi** | Swagger UI at `/swagger-ui.html` |
 | Tests | **JUnit 5, Mockito, Testcontainers, MockMvc** | Real Postgres in integration tests |
 | Build | **Maven** | The most requested in job postings |
@@ -227,12 +227,12 @@ Each phase ends with a verifiable **"done when"** criterion. Total estimate: **a
 - **Done when:** the app starts, Flyway applies the migrations and the seed is visible in the database.
 
 ### Phase 2: Authentication (3 days)
-- [ ] `POST /auth/register` with validation and BCrypt password hashing
-- [ ] `POST /auth/login` returning a JWT (claims: `sub`, `role`, `exp`)
-- [ ] JWT filter and route/role access rules
-- [ ] Global error handler (`ProblemDetail`)
-- [ ] Tests: duplicate sign-up, wrong password, protected route without token
-- **Done when:** I can log in through Swagger and call `/users/me`.
+- [x] `POST /auth/register` with validation and BCrypt password hashing
+- [x] `POST /auth/login` returning a JWT (claims: `sub`, `role`, `exp`)
+- [x] JWT filter and route/role access rules
+- [x] Global error handler (`ProblemDetail`)
+- [x] Tests: duplicate sign-up, wrong password, protected route without token
+- **Done when:** I can log in and call `/users/me` with the token (verified by tests; Swagger arrives in Phase 5).
 
 ### Phase 3: Locations and spaces (2 days)
 - [ ] CRUD for locations and spaces (only ADMIN writes)

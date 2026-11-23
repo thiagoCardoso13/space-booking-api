@@ -11,3 +11,10 @@ spring:
       ddl-auto: validate
   flyway:
     enabled: true
+
+app:
+  jwt:
+    # Local development default only. Always override JWT_SECRET (at least 32 characters) outside local use.
+    secret: ${JWT_SECRET:local-dev-only-secret-change-me-0123456789}
+    expiration: ${JWT_EXPIRATION:1h}
+    issuer: space-booking-api
