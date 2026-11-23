@@ -220,10 +220,10 @@ Each phase ends with a verifiable **"done when"** criterion. Total estimate: **a
 - **Done when:** `./mvnw verify` passes locally and on GitHub Actions.
 
 ### Phase 1: Database and domain (2 days)
-- [ ] `docker-compose.yml` with Postgres only
-- [ ] Flyway migrations V1 (tables) and V2 (exclusion constraint)
-- [ ] JPA entities and repositories
-- [ ] Seed data (2 locations in Elche, a coworking and a sports center, 6 spaces, 1 admin)
+- [x] `docker-compose.yml` with Postgres only
+- [x] Flyway migrations V1 (tables) and V2 (exclusion constraint)
+- [x] JPA entities and repositories
+- [x] Seed data (2 locations in Elche, a coworking and a sports center, 6 spaces, 1 admin)
 - **Done when:** the app starts, Flyway applies the migrations and the seed is visible in the database.
 
 ### Phase 2: Authentication (3 days)
@@ -271,7 +271,7 @@ Each phase ends with a verifiable **"done when"** criterion. Total estimate: **a
 - [ ] Managed Postgres on Neon
 - [ ] Image deployment on Render, environment variables, `/actuator/health` as health check
 - [ ] Automatic deploy after CI passes
-- [ ] Demo data and a test user documented
+- [ ] Demo data and a test user documented; rotate the seeded demo admin password (`V3__seed_demo_data.sql` is demo-only)
 - **Done when:** I open the public Swagger and complete a full flow (sign up, log in, book, cancel).
 
 ### Phase 9: Presentation (1-2 days)

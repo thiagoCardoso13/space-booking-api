@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: space-booking-api
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/spacebooking}
+    username: ${DB_USER:spacebooking}
+    password: ${DB_PASSWORD:spacebooking}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
