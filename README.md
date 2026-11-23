@@ -12,7 +12,7 @@ The hard part is not the CRUD: it is making sure two people can never book the s
 arrive at the same time. That guarantee lives in the database (an exclusion constraint on time ranges), not only in
 application code, and it is covered by a concurrency test.
 
-> 🚧 **Work in progress.** Phases 0-7 are done (setup, database, authentication, locations and spaces, bookings and business rules, quality, Docker, CI/CD). Next: deployment. The full plan, data model, business rules,
+> 🚧 **Work in progress.** Phases 0-7 are done (setup, database, authentication, locations and spaces, bookings and business rules, quality, Docker, CI/CD). Next: deployment (the step by step guide is ready in [docs/DEPLOY.md](docs/DEPLOY.md)). The full plan, data model, business rules,
 > API design and roadmap are in [docs/PLAN.md](docs/PLAN.md).
 
 ## Planned features
@@ -80,6 +80,10 @@ docker pull ghcr.io/thiagocardoso13/space-booking-api:latest
 ```
 
 Dependabot proposes updates for Maven, GitHub Actions and Docker dependencies.
+
+## Deployment
+
+[docs/DEPLOY.md](docs/DEPLOY.md) is a step by step guide to run the published image on Render with a Neon database, both on free plans: creating the database, the environment variables, the first start, rotating the demo admin password, automatic deploys from CI, and what to expect from cold starts. `.github/scripts/live-check.sh <url>` verifies a running deployment.
 
 ## Docker image
 

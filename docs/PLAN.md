@@ -282,6 +282,7 @@ Each phase ends with a verifiable **"done when"** criterion. Total estimate: **a
 - [ ] Image deployment on Render, environment variables, `/actuator/health` as health check
 - [ ] Automatic deploy after CI passes
 - [ ] Demo data and a test user documented; rotate the seeded demo admin password (`V3__seed_demo_data.sql` is demo-only)
+- **Status:** the guide ([DEPLOY.md](DEPLOY.md)) and the verification script are done and tested locally; the actual deployment needs the owner's Render and Neon accounts.
 - **Done when:** I open the public Swagger and complete a full flow (sign up, log in, book, cancel).
 
 ### Phase 9: Presentation (1-2 days)

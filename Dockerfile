@@ -35,7 +35,7 @@ EXPOSE 8080
 ENV SPRING_PROFILES_ACTIVE=prod \
     JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=75 -XX:+ExitOnOutOfMemoryError"
 
-HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=3s --start-period=180s --retries=3 \
     CMD wget -qO- http://localhost:${PORT:-8080}/actuator/health/liveness > /dev/null || exit 1
 
 ENTRYPOINT ["java", "-jar", "app.jar"]
