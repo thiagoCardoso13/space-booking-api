@@ -127,7 +127,7 @@ API returns `409 Conflict`. This becomes a **concurrency test** and a strong par
 |---|---|---|
 | R1 | Booking must be inside the location's opening hours | `opens_at`-`closes_at` |
 | R2 | Fixed duration | 60 min |
-| R3 | Start aligned to the hour (or half hour) | `:00` and `:30` |
+| R3 | Start aligned to the full hour | `:00` only |
 | R4 | No overlap in the same space | database constraint |
 | R5 | No bookings in the past | `starts_at > now()` |
 | R6 | Maximum advance | 14 days |
@@ -136,7 +136,7 @@ API returns `409 Conflict`. This becomes a **concurrency test** and a strong par
 | R9 | Minimum notice to cancel | at least 2 h before |
 | R10 | Inactive spaces do not accept bookings | |
 
-Time zones: store everything in UTC (`timestamptz`) and convert to `Europe/Madrid` at the edge.
+Time zones: store everything in UTC (`timestamptz`) and convert to `Europe/Madrid` at the edge. Opening hours (`opens_at`, `closes_at`) are interpreted in `Europe/Madrid` for the MVP.
 
 ---
 
