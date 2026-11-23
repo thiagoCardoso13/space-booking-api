@@ -1,4 +1,4 @@
-package com.thiago.reservas;
+package com.thiago.spacebooking;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
