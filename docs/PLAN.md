@@ -125,16 +125,20 @@ API returns `409 Conflict`. This becomes a **concurrency test** and a strong par
 
 | # | Rule | Value |
 |---|---|---|
-| R1 | Booking must be inside the location's opening hours | `opens_at`-`closes_at` |
+| R1 | Booking must be inside the location's opening hours (and end on the same day) | `opens_at`-`closes_at`, Madrid time |
 | R2 | Fixed duration | 60 min |
 | R3 | Start aligned to the full hour | `:00` only |
 | R4 | No overlap in the same space | database constraint |
 | R5 | No bookings in the past | `starts_at > now()` |
 | R6 | Maximum advance | 14 days |
 | R7 | Limit of active future bookings per user | 3 |
-| R8 | Only the booking owner (or an admin) can cancel | |
-| R9 | Minimum notice to cancel | at least 2 h before |
+| R8 | Only the booking owner (or an admin) can see or cancel it. Others get `404`, so the existence of a booking is not leaked | |
+| R9 | Minimum notice to cancel (admins are exempt) | at least 2 h before |
 | R10 | Inactive spaces do not accept bookings | |
+
+Violations of R1, R3, R5, R6, R7, R9 and R10 return `422` with a `rule` property (e.g. `"rule": "R6"`). R4 returns `409`. Cancelling an already cancelled booking is a no-op (`204`).
+
+Concurrency: R4 is enforced by the database constraint. R7 is enforced by locking the user's row while counting and inserting, so parallel requests from one user cannot exceed the limit (verified by tests that fail without the lock).
 
 Time zones: store everything in UTC (`timestamptz`) and convert to `Europe/Madrid` at the edge. Opening hours (`opens_at`, `closes_at`) are interpreted in `Europe/Madrid` for the MVP.
 
@@ -158,23 +162,23 @@ Base path: `/api/v1`. Errors follow **RFC 7807** (`application/problem+json`). L
 | GET | `/locations/{id}` | public | Location details |
 | POST / PUT / DELETE | `/locations[/{id}]` | ADMIN | Manage. DELETE is refused with `409` while the location has spaces |
 | GET | `/locations/{id}/spaces` | public | Active spaces of a location (filter `type`) |
-| GET | `/spaces?locationId=&type=&city=&active=` | public | Search spaces (paginated, `active=true` by default) |
+| GET | `/spaces?locationId=&type=&city=&active=` | public | Search spaces (paginated, `active=true` by default; `active=false` is admin only) |
 | GET | `/spaces/{id}` | public | Space details |
 | POST / PUT / DELETE | `/spaces[/{id}]` | ADMIN | Manage. DELETE deactivates the space (soft delete) so past bookings stay valid |
-| GET | `/spaces/{id}/availability?date=2026-12-01` | public | Free slots for the day |
+| GET | `/spaces/{id}/availability?date=2026-12-01` | public | Every slot of the day with `available` true/false |
 
 ### Bookings
 | Method | Route | Access | Description |
 |---|---|---|---|
-| POST | `/bookings` | USER | Create a booking |
-| GET | `/bookings/me?status=&from=&to=` | USER | My bookings (paginated) |
-| GET | `/bookings/{id}` | owner/ADMIN | Details |
+| POST | `/bookings` | authenticated | Create a booking (`spaceId`, `startsAt`; the end is start + 60 min) |
+| GET | `/bookings/me?status=&from=&to=` | authenticated | My bookings (paginated) |
+| GET | `/bookings/{id}` | owner/ADMIN | Details (`404` for other users) |
 | DELETE | `/bookings/{id}` | owner/ADMIN | Cancel (status becomes `CANCELLED`) |
 | GET | `/admin/bookings?spaceId=&date=` | ADMIN | Owner's view |
 
 ### Expected status codes
 `201` created · `400` validation · `401` no token · `403` forbidden · `404` not found ·
-`409` slot conflict · `422` business rule violated (e.g. outside opening hours)
+`409` slot already booked or resource conflict · `422` business rule violated (with a `rule` code)
 
 ---
 
@@ -244,11 +248,11 @@ Each phase ends with a verifiable **"done when"** criterion. Total estimate: **a
 - **Done when:** an admin creates a space and a regular user can only list.
 
 ### Phase 4: Bookings and rules (4 days), the core of the project
-- [ ] `BookingPolicy` with R1-R10, each rule with a unit test
-- [ ] `POST /bookings`, `GET /bookings/me`, `DELETE /bookings/{id}`
-- [ ] Translate the constraint violation into `409 Conflict`
-- [ ] `GET /spaces/{id}/availability`
-- [ ] **Concurrency test**: 10 threads booking the same slot, only 1 wins
+- [x] `BookingPolicy` with R1-R10, each rule with a unit test
+- [x] `POST /bookings`, `GET /bookings/me`, `DELETE /bookings/{id}`
+- [x] Translate the constraint violation into `409 Conflict`
+- [x] `GET /spaces/{id}/availability`
+- [x] **Concurrency test**: 10 threads booking the same slot, only 1 wins
 - **Done when:** every rule has a passing test and the concurrency test is stable.
 
 ### Phase 5: Quality (2 days)

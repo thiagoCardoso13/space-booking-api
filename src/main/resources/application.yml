@@ -22,3 +22,9 @@ app:
     secret: ${JWT_SECRET:local-dev-only-secret-change-me-0123456789}
     expiration: ${JWT_EXPIRATION:1h}
     issuer: space-booking-api
+  booking:
+    zone: Europe/Madrid
+    slot-duration: 60m
+    max-advance-days: 14
+    max-active-bookings-per-user: 3
+    min-cancel-notice: 2h

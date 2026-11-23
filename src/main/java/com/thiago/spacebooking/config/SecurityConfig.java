@@ -40,7 +40,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/auth/**").permitAll()
                         .requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/locations/**", "/api/v1/spaces/**").permitAll()
-                        .requestMatchers("/api/v1/locations/**", "/api/v1/spaces/**").hasRole("ADMIN")
+                        .requestMatchers("/api/v1/locations/**", "/api/v1/spaces/**", "/api/v1/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated())
                 .exceptionHandling(e -> e
                         .authenticationEntryPoint(problemHandler)
