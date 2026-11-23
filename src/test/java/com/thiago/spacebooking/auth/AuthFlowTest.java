@@ -10,8 +10,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.jayway.jsonpath.JsonPath;
 import com.thiago.spacebooking.TestcontainersConfiguration;
+import com.thiago.spacebooking.config.JwtProperties;
+import com.thiago.spacebooking.user.UserRepository;
 import com.nimbusds.jose.jwk.source.ImmutableSecret;
 import java.nio.charset.StandardCharsets;
+import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
 import javax.crypto.SecretKey;
@@ -25,6 +29,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.JwsHeader;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
+import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.test.web.servlet.MockMvc;
@@ -39,6 +44,12 @@ class AuthFlowTest {
 
     @Autowired
     MockMvc mvc;
+    @Autowired
+    JwtEncoder jwtEncoder;
+    @Autowired
+    JwtProperties jwtProperties;
+    @Autowired
+    UserRepository users;
 
     @Test
     void registerCreatesUserWithoutExposingThePassword() throws Exception {
@@ -137,6 +148,25 @@ class AuthFlowTest {
 
         mvc.perform(get("/api/v1/users/me").header("Authorization", "Bearer " + forged))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void expiredTokenIsRejected() throws Exception {
+        // Issued by the real encoder and secret, but two hours ago with a one hour validity.
+        Clock twoHoursAgo = Clock.fixed(Instant.now().minus(Duration.ofHours(2)), java.time.ZoneOffset.UTC);
+        var admin = users.findByEmail("admin@example.com").orElseThrow();
+        String expired = new JwtService(jwtEncoder, jwtProperties, twoHoursAgo).issueToken(admin).accessToken();
+
+        mvc.perform(get("/api/v1/users/me").header("Authorization", "Bearer " + expired))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void unauthenticatedErrorBodyIsAlwaysValidJson() throws Exception {
+        mvc.perform(get("/api/v1/users/me\"x"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.status").value(401))
+                .andExpect(jsonPath("$.instance").value("/api/v1/users/me%22x"));
     }
 
     @Test

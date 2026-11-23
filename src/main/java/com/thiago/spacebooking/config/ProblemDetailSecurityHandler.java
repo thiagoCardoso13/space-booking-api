@@ -3,6 +3,8 @@ package com.thiago.spacebooking.config;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.nio.charset.StandardCharsets;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -12,10 +14,17 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.stereotype.Component;
+import tools.jackson.databind.json.JsonMapper;
 
 /** Writes 401 and 403 responses from the security filter chain as RFC 7807 problem details. */
 @Component
 class ProblemDetailSecurityHandler implements AuthenticationEntryPoint, AccessDeniedHandler {
+
+    private final JsonMapper jsonMapper;
+
+    ProblemDetailSecurityHandler(JsonMapper jsonMapper) {
+        this.jsonMapper = jsonMapper;
+    }
 
     @Override
     public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException ex)
@@ -35,9 +44,12 @@ class ProblemDetailSecurityHandler implements AuthenticationEntryPoint, AccessDe
         response.setStatus(status.value());
         response.setContentType(MediaType.APPLICATION_PROBLEM_JSON_VALUE);
         response.setCharacterEncoding(StandardCharsets.UTF_8.name());
-        String body = """
-                {"type":"about:blank","title":"%s","status":%d,"detail":"%s","instance":"%s"}"""
-                .formatted(status.getReasonPhrase(), status.value(), detail, request.getRequestURI().replace("\"", ""));
-        response.getWriter().write(body);
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("type", "about:blank");
+        body.put("title", status.getReasonPhrase());
+        body.put("status", status.value());
+        body.put("detail", detail);
+        body.put("instance", request.getRequestURI());
+        response.getWriter().write(jsonMapper.writeValueAsString(body));
     }
 }
