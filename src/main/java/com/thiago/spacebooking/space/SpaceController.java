@@ -1,5 +1,8 @@
 package com.thiago.spacebooking.space;
 
+import org.springdoc.core.annotations.ParameterObject;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import com.thiago.spacebooking.config.AdminOnly;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -42,7 +45,7 @@ public class SpaceController {
             @RequestParam(required = false) SpaceType type,
             @RequestParam(required = false) String city,
             @RequestParam(defaultValue = "true") boolean active,
-            @PageableDefault(size = 20, sort = "name") Pageable pageable,
+            @ParameterObject @PageableDefault(size = 20, sort = "name") Pageable pageable,
             Authentication authentication) {
         if (!active && !CurrentUser.isAdmin(authentication)) {
             // Anonymous callers get 401 and regular users 403 from the security filter chain.
@@ -58,6 +61,10 @@ public class SpaceController {
     }
 
     @Operation(summary = "Create a space (admin)", security = @SecurityRequirement(name = OpenApiConfig.BEARER))
+    @AdminOnly
+    @ApiResponse(responseCode = "201", description = "Space created")
+    @ApiResponse(responseCode = "409", description = "A space with this name already exists in the location")
+    @ApiResponse(responseCode = "422", description = "locationId is required")
     @PostMapping
     public ResponseEntity<SpaceResponse> create(@Valid @RequestBody SpaceRequest request) {
         Space space = spaceService.create(request);
@@ -65,6 +72,9 @@ public class SpaceController {
     }
 
     @Operation(summary = "Update a space (admin)", security = @SecurityRequirement(name = OpenApiConfig.BEARER))
+    @AdminOnly
+    @ApiResponse(responseCode = "200", description = "Space updated")
+    @ApiResponse(responseCode = "409", description = "A space with this name already exists in the location")
     @PutMapping("/{id}")
     public SpaceResponse update(@PathVariable UUID id, @Valid @RequestBody SpaceRequest request) {
         return SpaceResponse.from(spaceService.update(id, request));
@@ -72,6 +82,8 @@ public class SpaceController {
 
     /** Deactivates the space (soft delete) so existing bookings stay valid. */
     @Operation(summary = "Deactivate a space (admin)", description = "Soft delete: the space stops accepting bookings, existing ones are kept. Idempotent.", security = @SecurityRequirement(name = OpenApiConfig.BEARER))
+    @AdminOnly
+    @ApiResponse(responseCode = "204", description = "Space deactivated")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deactivate(@PathVariable UUID id) {
         spaceService.deactivate(id);

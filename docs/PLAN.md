@@ -261,6 +261,7 @@ Each phase ends with a verifiable **"done when"** criterion. Total estimate: **a
 - [x] Springdoc: examples, descriptions and Bearer security scheme
 - [x] Structured logs and Actuator `/health`
 - **Done when:** `./mvnw verify` runs everything and the coverage report is generated.
+- **Review notes:** a test calls every documented operation as a regular user and checks that the OpenAPI document lists a `403` exactly where the security configuration really answers `403`, so the docs cannot drift from the rules.
 
 ### Phase 6: Docker (1 day)
 - [ ] Multi-stage `Dockerfile` (Maven build, slim JRE runtime, non-root user)
@@ -316,6 +317,8 @@ Each phase ends with a verifiable **"done when"** criterion. Total estimate: **a
 4. Availability cache (Redis) and rate limiting
 5. Observability: Micrometer + Prometheus + Grafana
 6. Move notifications to an event-driven module (Kafka)
+7. CORS configuration, needed as soon as a browser frontend on another origin consumes the API (the Swagger UI is same-origin and works today)
+8. Rate limiting on `/auth/login` (brute force protection)
 
 ---
 

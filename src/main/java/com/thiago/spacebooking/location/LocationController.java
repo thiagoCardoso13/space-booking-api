@@ -1,5 +1,7 @@
 package com.thiago.spacebooking.location;
 
+import org.springdoc.core.annotations.ParameterObject;
+import com.thiago.spacebooking.config.AdminOnly;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -40,7 +42,7 @@ public class LocationController {
     @Operation(summary = "List locations", description = "Public and paginated. Filter by `city` (case-insensitive).")
     @GetMapping
     public PageResponse<LocationResponse> list(@RequestParam(required = false) String city,
-            @PageableDefault(size = 20, sort = "name") Pageable pageable) {
+            @ParameterObject @PageableDefault(size = 20, sort = "name") Pageable pageable) {
         return PageResponse.from(locationService.search(city, pageable), LocationResponse::from);
     }
 
@@ -54,12 +56,14 @@ public class LocationController {
     @GetMapping("/{id}/spaces")
     public PageResponse<SpaceResponse> spaces(@PathVariable UUID id,
             @RequestParam(required = false) com.thiago.spacebooking.space.SpaceType type,
-            @PageableDefault(size = 20, sort = "name") Pageable pageable) {
+            @ParameterObject @PageableDefault(size = 20, sort = "name") Pageable pageable) {
         locationService.get(id);
         return PageResponse.from(spaceService.search(id, type, null, true, pageable), SpaceResponse::from);
     }
 
     @Operation(summary = "Create a location (admin)", security = @SecurityRequirement(name = OpenApiConfig.BEARER))
+    @AdminOnly
+    @ApiResponse(responseCode = "201", description = "Location created")
     @ApiResponse(responseCode = "422", description = "closesAt must be after opensAt")
     @PostMapping
     public ResponseEntity<LocationResponse> create(@Valid @RequestBody LocationRequest request) {
@@ -69,12 +73,18 @@ public class LocationController {
     }
 
     @Operation(summary = "Update a location (admin)", security = @SecurityRequirement(name = OpenApiConfig.BEARER))
+    @AdminOnly
+    @ApiResponse(responseCode = "200", description = "Location updated")
+    @ApiResponse(responseCode = "422", description = "closesAt must be after opensAt")
     @PutMapping("/{id}")
     public LocationResponse update(@PathVariable UUID id, @Valid @RequestBody LocationRequest request) {
         return LocationResponse.from(locationService.update(id, request));
     }
 
     @Operation(summary = "Delete a location (admin)", description = "Refused with 409 while the location still has spaces.", security = @SecurityRequirement(name = OpenApiConfig.BEARER))
+    @AdminOnly
+    @ApiResponse(responseCode = "204", description = "Location deleted")
+    @ApiResponse(responseCode = "409", description = "The location still has spaces")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
         locationService.delete(id);

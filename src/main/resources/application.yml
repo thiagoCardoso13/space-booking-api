@@ -39,3 +39,12 @@ management:
       probes:
         enabled: true
       show-details: never
+
+springdoc:
+  # Enabled on purpose, also in production: the Swagger UI is the live demo of this portfolio project.
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
+    persist-authorization: true
+    operations-sorter: method

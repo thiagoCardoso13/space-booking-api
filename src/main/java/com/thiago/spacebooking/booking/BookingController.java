@@ -1,5 +1,7 @@
 package com.thiago.spacebooking.booking;
 
+import org.springdoc.core.annotations.ParameterObject;
+import com.thiago.spacebooking.config.AdminOnly;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -39,6 +41,7 @@ public class BookingController {
     }
 
     @Operation(summary = "Book a slot", description = "The booking lasts 60 minutes from `startsAt`, which must be on the full hour. Any offset is accepted (`2030-01-16T10:00:00+01:00`).")
+    @ApiResponse(responseCode = "201", description = "Booking confirmed")
     @ApiResponse(responseCode = "409", description = "Slot already booked")
     @ApiResponse(responseCode = "422", description = "Business rule violated: see the `rule` property (R1, R3, R5, R6, R7, R10)")
     @PostMapping("/bookings")
@@ -53,7 +56,7 @@ public class BookingController {
             @RequestParam(required = false) BookingStatus status,
             @RequestParam(required = false) Instant from,
             @RequestParam(required = false) Instant to,
-            @PageableDefault(size = 20, sort = "startsAt") Pageable pageable,
+            @ParameterObject @PageableDefault(size = 20, sort = "startsAt") Pageable pageable,
             Authentication authentication) {
         UUID userId = CurrentUser.of(authentication).id();
         return PageResponse.from(bookingService.listMine(userId, status, from, to, pageable), BookingResponse::from);
@@ -66,6 +69,7 @@ public class BookingController {
     }
 
     @Operation(summary = "Cancel a booking", description = "Owner or admin. Owners need 2 hours of notice (R9). Idempotent.")
+    @ApiResponse(responseCode = "204", description = "Booking cancelled (or already cancelled)")
     @ApiResponse(responseCode = "422", description = "Less than 2 hours before the start (R9)")
     @DeleteMapping("/bookings/{id}")
     public ResponseEntity<Void> cancel(@PathVariable UUID id, Authentication authentication) {
@@ -74,11 +78,12 @@ public class BookingController {
     }
 
     @Operation(summary = "List bookings (admin)", description = "Filter by `spaceId` and by `date` (Madrid time).")
+    @AdminOnly
     @GetMapping("/admin/bookings")
     public PageResponse<BookingResponse> adminList(
             @RequestParam(required = false) UUID spaceId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
-            @PageableDefault(size = 20, sort = "startsAt") Pageable pageable) {
+            @ParameterObject @PageableDefault(size = 20, sort = "startsAt") Pageable pageable) {
         return PageResponse.from(bookingService.listForAdmin(spaceId, date, pageable), BookingResponse::from);
     }
 }

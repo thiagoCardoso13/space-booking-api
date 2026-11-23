@@ -25,6 +25,7 @@ public class AuthController {
     }
 
     @Operation(summary = "Create an account", description = "Always creates a regular USER. The email is case-insensitive and must be unique.")
+    @ApiResponse(responseCode = "201", description = "Account created")
     @ApiResponse(responseCode = "409", description = "Email already registered")
     @PostMapping("/register")
     public ResponseEntity<UserResponse> register(@Valid @RequestBody RegisterRequest request) {
@@ -33,6 +34,7 @@ public class AuthController {
     }
 
     @Operation(summary = "Log in", description = "Returns a JWT (1 hour). Send it as `Authorization: Bearer <token>`.")
+    @ApiResponse(responseCode = "200", description = "Token issued")
     @ApiResponse(responseCode = "401", description = "Invalid email or password")
     @PostMapping("/login")
     public TokenResponse login(@Valid @RequestBody LoginRequest request) {

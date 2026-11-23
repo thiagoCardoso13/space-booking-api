@@ -1,5 +1,6 @@
 package com.thiago.spacebooking.booking;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import com.thiago.spacebooking.common.ResourceNotFoundException;
 import com.thiago.spacebooking.location.Location;
 import com.thiago.spacebooking.space.Space;
@@ -18,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class AvailabilityService {
 
+    @Schema(name = "AvailabilitySlot")
     public record Slot(Instant startsAt, Instant endsAt, boolean available) {
     }
 

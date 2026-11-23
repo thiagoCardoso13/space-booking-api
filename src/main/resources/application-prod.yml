@@ -3,3 +3,7 @@ logging:
   structured:
     format:
       console: ecs
+
+# Behind a TLS-terminating proxy (Render): trust X-Forwarded-* so generated URLs (Swagger "Try it out") use https and the public host.
+server:
+  forward-headers-strategy: framework
