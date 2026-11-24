@@ -286,9 +286,10 @@ Each phase ends with a verifiable **"done when"** criterion. Total estimate: **a
 - **Done when:** I open the public Swagger and complete a full flow (sign up, log in, book, cancel).
 
 ### Phase 9: Presentation (1-2 days)
-- [ ] Final README (section 12): diagrams, GIF of the flow in Swagger, how to run, what I learned
+- [x] Final README (section 12): diagrams, GIF of the flow in Swagger, how to run, design decisions and limitations
 - [ ] Update CV, LinkedIn (Projects and Featured) and pin the repository on GitHub
 - [ ] One post telling the story and the concurrency challenge
+- **Status:** the README, the diagrams and the demo GIF are done. The CV entry, the LinkedIn text and the post are drafted outside the repository; publishing them is up to the owner.
 - **Done when:** live link + post published + CV updated.
 
 ### Summary schedule

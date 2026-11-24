@@ -3,54 +3,185 @@
 [![CI](https://github.com/thiagoCardoso13/space-booking-api/actions/workflows/ci.yml/badge.svg)](https://github.com/thiagoCardoso13/space-booking-api/actions/workflows/ci.yml)
 ![Java](https://img.shields.io/badge/Java-21-orange)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.2-brightgreen)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue)
 ![License](https://img.shields.io/badge/license-MIT-blue)
+
+A REST API to book meeting rooms, coworking desks and sports courts. Built with **Java 21, Spring Boot 4, PostgreSQL,
+JWT, Docker and GitHub Actions**, tested against a real database and deployed automatically on every push to `main`.
 
 ### 🔗 Live demo: [space-booking-api-dtam.onrender.com/swagger-ui.html](https://space-booking-api-dtam.onrender.com/swagger-ui.html)
 
-> It runs on free hosting (Render + Neon), which puts the service to sleep after 15 minutes without traffic.
+> The demo runs on free hosting (Render + Neon), which puts the service to sleep after 15 minutes without traffic.
 > **The first request after a quiet period can take 1-2 minutes** while the application starts again; after that it is fast.
 > Opening the [health endpoint](https://space-booking-api-dtam.onrender.com/actuator/health/liveness) first is a good way to wake it up.
 
-A REST API to book meeting rooms, coworking desks and sports courts, built with **Java 21, Spring Boot, PostgreSQL,
-JWT, Docker and GitHub Actions**.
+## The problem worth solving
 
-The hard part is not the CRUD: it is making sure two people can never book the same slot, even when their requests
-arrive at the same time. That guarantee lives in the database (an exclusion constraint on time ranges), not only in
-application code, and it is covered by a concurrency test.
+Booking is easy until two people try to book the same slot at the same moment. This project is about getting that
+right, not only about CRUD:
 
-> 🚧 **Work in progress.** Phases 0-8 are done (setup, database, authentication, locations and spaces, bookings and business rules, quality, Docker, CI/CD, deployment). Every push to `main` is deployed automatically once CI passes. Next: presentation. The deployment guide is in [docs/DEPLOY.md](docs/DEPLOY.md). The full plan, data model, business rules,
-> API design and roadmap are in [docs/PLAN.md](docs/PLAN.md).
+- **No double bookings, even under concurrency.** The guarantee lives in PostgreSQL (an exclusion constraint over time
+  ranges), not only in application code. Tests fire parallel requests at the same slot and only one wins.
+- **Business rules that are easy to read and to test.** Opening hours in the local time zone, one-hour slots, advance
+  limits, a per-user limit and cancellation notice live in one small `BookingPolicy` class with one unit test per rule.
+- **An API that documents itself accurately.** The OpenAPI document is checked by a test against what the security
+  configuration really enforces, so the docs cannot lie about who can call what.
 
-## Planned features
+## What it does
 
-- Sign-up and login with JWT, roles `USER` and `ADMIN`
-- Locations and spaces (rooms, desks, courts) managed by admins
-- Daily availability per space
-- Bookings with business rules: opening hours, 60-minute slots, no overlaps, advance limit, per-user limit, cancellation notice
-- Swagger/OpenAPI documentation
-- Unit and integration tests on a real PostgreSQL (Testcontainers)
-- Docker, CI/CD and a public deployment (Render + Neon)
+- Sign up and log in with **JWT** (roles `USER` and `ADMIN`).
+- Admins manage **locations** and **spaces** (rooms, desks, courts); everybody can browse them.
+- **Availability** per space and day, in one-hour slots, in the location's time zone.
+- **Bookings** with ten business rules (opening hours, no overlaps, advance limit, per-user limit, cancellation notice...).
+  Rule violations answer `422` with a machine readable `rule` code; a slot that is already taken answers `409`.
+- Paginated listings with filters, errors as **RFC 7807** `application/problem+json`, interactive **Swagger UI**.
 
-## Tech stack
+![Demo of the booking flow in Swagger UI](docs/demo.gif)
 
-Java 21 · Spring Boot 4.2 · Spring Security + JWT · Spring Data JPA · PostgreSQL 16 · Flyway · springdoc-openapi ·
-JUnit 5 · Mockito · Testcontainers · Maven · Docker · GitHub Actions
+## Architecture
 
-## Try the API
+```mermaid
+flowchart LR
+    Client["Browser / Swagger UI / API client"] -->|"HTTPS + JWT"| API
+    subgraph Render["Render (free web service)"]
+        API["Spring Boot API<br/>Java 21, Docker image"]
+    end
+    API -->|"JDBC over TLS"| DB[("Neon<br/>PostgreSQL 16")]
+    GH["GitHub Actions<br/>build, test, smoke test"] -->|"publishes image"| GHCR[("ghcr.io")]
+    GH -->|"deploy hook"| Render
+    GHCR -->|"pulled by"| Render
+```
 
-Open the [live Swagger UI](https://space-booking-api-dtam.onrender.com/swagger-ui.html), or run the app yourself (see below) and open **http://localhost:8080/swagger-ui.html**.
+A layered monolith organized **by feature** (`auth`, `user`, `location`, `space`, `booking`): controllers take and
+return DTOs, services hold the rules, repositories talk to PostgreSQL through JPA. The schema is versioned with Flyway.
 
-1. Create your own account with `POST /api/v1/auth/register` and log in with `POST /api/v1/auth/login`. (Running locally you can also use the demo admin `admin@example.com` / `ChangeMe123!`; on the live deployment that password was replaced.)
-2. Copy the `accessToken`, press **Authorize** and paste it.
-3. Browse `GET /api/v1/spaces`, check `GET /api/v1/spaces/{id}/availability?date=...` and book a slot with `POST /api/v1/bookings`.
+### Data model
 
-Health check: `GET /actuator/health`. The OpenAPI document is at `/v3/api-docs`.
+```mermaid
+erDiagram
+    USERS ||--o{ BOOKINGS : makes
+    LOCATIONS ||--o{ SPACES : has
+    SPACES ||--o{ BOOKINGS : receives
+
+    USERS {
+        uuid id PK
+        string email UK
+        string password_hash
+        string role "USER or ADMIN"
+    }
+    LOCATIONS {
+        uuid id PK
+        string name
+        string city
+        time opens_at
+        time closes_at
+    }
+    SPACES {
+        uuid id PK
+        uuid location_id FK
+        string name
+        string type "MEETING_ROOM, DESK, SPORTS_COURT"
+        boolean active
+    }
+    BOOKINGS {
+        uuid id PK
+        uuid space_id FK
+        uuid user_id FK
+        timestamptz starts_at
+        timestamptz ends_at
+        string status "CONFIRMED or CANCELLED"
+    }
+```
+
+## Design decisions
+
+**1. The database decides who gets the slot.** An exclusion constraint makes two confirmed bookings of the same space
+with overlapping time ranges impossible; cancelled bookings do not block the slot, and back-to-back bookings are allowed.
+
+```sql
+ALTER TABLE bookings ADD CONSTRAINT no_overlapping_bookings
+  EXCLUDE USING gist (space_id WITH =, tstzrange(starts_at, ends_at) WITH &&)
+  WHERE (status = 'CONFIRMED');
+```
+
+**2. A deadlock found by CI, and how it was fixed.** With ten simultaneous requests for one slot, PostgreSQL sometimes
+aborted a few inserts with `deadlock detected` while checking that constraint, which showed up as `500` instead of `409`
+on the CI runner (it had passed on my laptop). The stress test that reproduces it failed on every run before the fix.
+Retrying alone worked but was slow, because PostgreSQL only detects a deadlock after one second. The real fix is to
+serialize bookings per space: every booking first locks the space row, then the user row (always in that order, so
+requests cannot wait on each other in a cycle). The loser now waits for the winner's commit and gets a clean `409`.
+
+```mermaid
+sequenceDiagram
+    participant A as Request A
+    participant B as Request B
+    participant DB as PostgreSQL
+    A->>DB: lock the space row
+    B->>DB: lock the space row (waits)
+    A->>DB: lock the user, check the limit, insert the booking
+    A->>DB: commit
+    DB-->>B: lock released
+    B->>DB: insert the same slot
+    DB-->>B: exclusion constraint violation
+    B-->>B: answers 409 Conflict
+```
+
+The user lock is also what keeps the "at most 3 active bookings" rule true when one user sends parallel requests
+(a test that fails without the lock proves it). A small retry wrapper remains as a safety net for other lock failures.
+
+**3. Time zones.** Instants are stored in UTC (`timestamptz`); opening hours and slot alignment are interpreted in
+`Europe/Madrid`, including daylight saving time (covered by tests).
+
+**4. Secure by default.** The Docker image starts with the `prod` profile, which refuses to boot without `JWT_SECRET`,
+logs structured JSON and runs as a non-root user. Booking details are only visible to the owner or an admin (others get
+`404`, so the existence of a booking is not leaked). Login answers identically for an unknown email and a wrong password.
+
+**5. The docs are tested.** A test calls every documented operation as a regular user and checks that the OpenAPI
+document lists a `403` exactly where the security configuration answers `403`.
+
+## Business rules
+
+| Rule | Description |
+|---|---|
+| R1 | A booking must fit inside the location's opening hours (Madrid time) and end on the same day |
+| R2 | Fixed duration of 60 minutes |
+| R3 | Start on the full hour |
+| R4 | No overlap in the same space (enforced by the database) |
+| R5 | No bookings in the past |
+| R6 | At most 14 days in advance |
+| R7 | At most 3 active future bookings per user |
+| R8 | Only the owner (or an admin) can see or cancel a booking |
+| R9 | Owners cancel with at least 2 hours of notice (admins are exempt) |
+| R10 | Inactive spaces cannot be booked |
+
+## API overview
+
+Everything lives under `/api/v1`; the full, interactive reference is the [Swagger UI](https://space-booking-api-dtam.onrender.com/swagger-ui.html).
+
+| Area | Endpoints | Access |
+|---|---|---|
+| Auth | `POST /auth/register`, `POST /auth/login`, `GET /users/me` | public, public, token |
+| Locations | `GET /locations`, `GET /locations/{id}`, `GET /locations/{id}/spaces` | public |
+| Spaces | `GET /spaces` (filters), `GET /spaces/{id}`, `GET /spaces/{id}/availability?date=` | public |
+| Bookings | `POST /bookings`, `GET /bookings/me`, `GET /bookings/{id}`, `DELETE /bookings/{id}` | token |
+| Administration | `POST/PUT/DELETE` on `/locations` and `/spaces`, `GET /admin/bookings` | admin |
+
+To try it: register with `POST /auth/register`, log in with `POST /auth/login`, press **Authorize** in the Swagger UI with the
+returned `accessToken`, look up a space and its availability, then book a slot.
 
 ## Quality
 
-- Unit tests for every booking rule, integration tests on a real PostgreSQL (Testcontainers) and concurrency tests that fire parallel requests at the same slot.
-- JaCoCo gate in the build: it fails below 85% line coverage overall or 90% in the booking package (about 98% today).
-- Production profile (`SPRING_PROFILES_ACTIVE=prod`) writes structured JSON logs and refuses to start without `JWT_SECRET`.
+- **85 tests:** unit tests for every booking rule, web-layer and integration tests on a **real PostgreSQL**
+  (Testcontainers) and **concurrency tests** that fire parallel requests at the same slot.
+- **Coverage gate in the build:** about 97% of lines are covered; the build fails below 85% overall or 90% in the booking package.
+- **CI/CD** ([workflow](.github/workflows/ci.yml)): every push runs the tests, builds the Docker image, smoke tests it
+  against a real PostgreSQL with the production profile, publishes it to the GitHub Container Registry and, on `main`,
+  deploys the exact tested image to Render. Dependabot proposes dependency updates.
+
+## Tech stack
+
+Java 21 · Spring Boot 4.2 · Spring Security + JWT (Nimbus) · Spring Data JPA · PostgreSQL 16 · Flyway · springdoc-openapi ·
+JUnit 5 · Mockito · Testcontainers · JaCoCo · Maven · Docker · GitHub Actions · Render · Neon
 
 ## Running locally
 
@@ -73,32 +204,12 @@ docker compose up -d postgres
 ./mvnw verify
 ```
 
-## CI/CD
+Running locally you can log in with the seeded demo admin `admin@example.com` / `ChangeMe123!`. That password is public
+on purpose and was replaced on the live deployment.
 
-Every push and pull request runs the [CI workflow](.github/workflows/ci.yml):
+### Configuration
 
-1. **Build and test**: `./mvnw verify` (unit, integration and concurrency tests on a real PostgreSQL) with the JaCoCo coverage gate. The coverage table appears in the job summary and the full report is uploaded as an artifact.
-2. **Docker image**: the image is built for `linux/amd64` and smoke tested before anything is published. The test starts it against a real PostgreSQL with the production profile and checks that it refuses to start without `JWT_SECRET`, that health, Swagger and login work, that logs are JSON and that it does not run as root (`.github/scripts/smoke-test.sh`).
-3. **Publish**: only on pushes to `main`, the tested image goes to the GitHub Container Registry.
-
-```bash
-docker pull ghcr.io/thiagocardoso13/space-booking-api:latest
-```
-
-Dependabot proposes updates for Maven, GitHub Actions and Docker dependencies.
-
-## Deployment
-
-[docs/DEPLOY.md](docs/DEPLOY.md) is a step by step guide to run the published image on Render with a Neon database, both on free plans: creating the database, the environment variables, the first start, rotating the demo admin password, automatic deploys from CI, and what to expect from cold starts. `.github/scripts/live-check.sh <url>` verifies a running deployment.
-
-## Docker image
-
-The [Dockerfile](Dockerfile) is multi-stage: Maven builds the jar in a JDK image, and only a JRE (Alpine) plus the
-extracted jar reaches the final image. It runs as a **non-root user**, separates dependencies from application code in
-layers (a rebuild after a code change takes seconds) and has a `HEALTHCHECK` on `/actuator/health/liveness`.
-
-The image is **secure by default**: it starts with the `prod` profile, which writes JSON logs and refuses to start
-unless `JWT_SECRET` is set. Configuration is done with environment variables:
+The Docker image is configured with environment variables:
 
 | Variable | Purpose | Default |
 |---|---|---|
@@ -108,8 +219,15 @@ unless `JWT_SECRET` is set. Configuration is done with environment variables:
 | `PORT` | HTTP port (platforms such as Render set it) | `8080` |
 | `SPRING_PROFILES_ACTIVE` | `prod` (image default) or any other name for local use | `prod` |
 
-`docker-compose.yml` runs the image with a `local` profile and the development secret, so it works out of the box.
-Never deploy it that way.
+The deployment on Render and Neon is described step by step in [docs/DEPLOY.md](docs/DEPLOY.md).
+
+## Limitations and what I would do next
+
+- **Free hosting:** the live demo sleeps when idle, hence the slow first request. A paid instance removes that.
+- **No refresh tokens, no login rate limiting and no CORS configuration yet.** The first two matter in production;
+  CORS only as soon as a browser frontend on another origin consumes the API.
+- **Not built:** email confirmations, recurring bookings, payments and a frontend. Each would be a natural next step
+  (see [docs/PLAN.md](docs/PLAN.md) for the roadmap and the decisions behind it).
 
 ## License
 
