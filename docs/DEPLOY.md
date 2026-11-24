@@ -144,7 +144,7 @@ secret **Deploy Hook URL** that triggers a deploy when called.
 
 1. Render → your service → **Settings → Deploy Hook**, copy the URL. Treat it as a password: whoever has it can trigger deploys.
 2. GitHub → repository **Settings → Secrets and variables → Actions → New repository secret**, name `RENDER_DEPLOY_HOOK_URL`, value the URL.
-3. Add a job at the end of `.github/workflows/ci.yml`. It only runs on pushes to `main`, after the image was built, smoke tested and published. It deploys the image tagged with the commit (`sha-` plus the first 7 characters of the commit SHA, which is exactly what CI publishes) instead of whatever `latest` points to, so what goes live is the image that was just tested:
+3. This is already in place: the `deploy` job at the end of `.github/workflows/ci.yml` (shown below). It only runs on pushes to `main`, after the image was built, smoke tested and published. It deploys the image tagged with the commit (`sha-` plus the first 7 characters of the commit SHA, which is exactly what CI publishes) instead of whatever `latest` points to, so what goes live is the image that was just tested:
 
 ```yaml
   deploy:

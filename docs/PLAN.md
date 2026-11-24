@@ -280,9 +280,9 @@ Each phase ends with a verifiable **"done when"** criterion. Total estimate: **a
 ### Phase 8: Deployment (1-2 days)
 - [x] Managed Postgres on Neon
 - [x] Image deployment on Render, environment variables, `/actuator/health/liveness` as health check (it does not query the database, so it does not keep Neon awake)
-- [ ] Automatic deploy after CI passes
+- [x] Automatic deploy after CI passes
 - [x] Demo data and a test user documented; rotate the seeded demo admin password (`V3__seed_demo_data.sql` is demo-only)
-- **Status:** deployed at https://space-booking-api-dtam.onrender.com. `live-check.sh` passes against it, including the check that the public demo admin password was rotated. Pending: the automatic deploy job (needs the `RENDER_DEPLOY_HOOK_URL` secret).
+- **Status:** deployed at https://space-booking-api-dtam.onrender.com. `live-check.sh` passes against it, including the check that the public demo admin password was rotated. Every push to `main` that passes CI and the image smoke test now deploys the commit-tagged image through the Render deploy hook (verified: Render logs `Triggered via Deploy Hook` with the `sha-` tag).
 - **Done when:** I open the public Swagger and complete a full flow (sign up, log in, book, cancel).
 
 ### Phase 9: Presentation (1-2 days)

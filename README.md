@@ -18,7 +18,7 @@ The hard part is not the CRUD: it is making sure two people can never book the s
 arrive at the same time. That guarantee lives in the database (an exclusion constraint on time ranges), not only in
 application code, and it is covered by a concurrency test.
 
-> 🚧 **Work in progress.** Phases 0-8 are done (setup, database, authentication, locations and spaces, bookings and business rules, quality, Docker, CI/CD, deployment). Next: presentation. The deployment guide is in [docs/DEPLOY.md](docs/DEPLOY.md). The full plan, data model, business rules,
+> 🚧 **Work in progress.** Phases 0-8 are done (setup, database, authentication, locations and spaces, bookings and business rules, quality, Docker, CI/CD, deployment). Every push to `main` is deployed automatically once CI passes. Next: presentation. The deployment guide is in [docs/DEPLOY.md](docs/DEPLOY.md). The full plan, data model, business rules,
 > API design and roadmap are in [docs/PLAN.md](docs/PLAN.md).
 
 ## Planned features
