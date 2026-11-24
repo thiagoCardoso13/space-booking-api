@@ -5,6 +5,12 @@
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.2-brightgreen)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
+### 🔗 Live demo: [space-booking-api-dtam.onrender.com/swagger-ui.html](https://space-booking-api-dtam.onrender.com/swagger-ui.html)
+
+> It runs on free hosting (Render + Neon), which puts the service to sleep after 15 minutes without traffic.
+> **The first request after a quiet period can take 1-2 minutes** while the application starts again; after that it is fast.
+> Opening the [health endpoint](https://space-booking-api-dtam.onrender.com/actuator/health/liveness) first is a good way to wake it up.
+
 A REST API to book meeting rooms, coworking desks and sports courts, built with **Java 21, Spring Boot, PostgreSQL,
 JWT, Docker and GitHub Actions**.
 
@@ -12,7 +18,7 @@ The hard part is not the CRUD: it is making sure two people can never book the s
 arrive at the same time. That guarantee lives in the database (an exclusion constraint on time ranges), not only in
 application code, and it is covered by a concurrency test.
 
-> 🚧 **Work in progress.** Phases 0-7 are done (setup, database, authentication, locations and spaces, bookings and business rules, quality, Docker, CI/CD). Next: deployment (the step by step guide is ready in [docs/DEPLOY.md](docs/DEPLOY.md)). The full plan, data model, business rules,
+> 🚧 **Work in progress.** Phases 0-8 are done (setup, database, authentication, locations and spaces, bookings and business rules, quality, Docker, CI/CD, deployment). Next: presentation. The deployment guide is in [docs/DEPLOY.md](docs/DEPLOY.md). The full plan, data model, business rules,
 > API design and roadmap are in [docs/PLAN.md](docs/PLAN.md).
 
 ## Planned features
@@ -32,9 +38,9 @@ JUnit 5 · Mockito · Testcontainers · Maven · Docker · GitHub Actions
 
 ## Try the API
 
-With the app running (see below), open **http://localhost:8080/swagger-ui.html**.
+Open the [live Swagger UI](https://space-booking-api-dtam.onrender.com/swagger-ui.html), or run the app yourself (see below) and open **http://localhost:8080/swagger-ui.html**.
 
-1. Call `POST /api/v1/auth/login` with the demo admin `admin@example.com` / `ChangeMe123!` (demo data only), or create your own account with `POST /api/v1/auth/register`.
+1. Create your own account with `POST /api/v1/auth/register` and log in with `POST /api/v1/auth/login`. (Running locally you can also use the demo admin `admin@example.com` / `ChangeMe123!`; on the live deployment that password was replaced.)
 2. Copy the `accessToken`, press **Authorize** and paste it.
 3. Browse `GET /api/v1/spaces`, check `GET /api/v1/spaces/{id}/availability?date=...` and book a slot with `POST /api/v1/bookings`.
 

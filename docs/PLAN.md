@@ -278,11 +278,11 @@ Each phase ends with a verifiable **"done when"** criterion. Total estimate: **a
 - **Notes:** `.github/scripts/smoke-test.sh <image>` runs the same checks locally. Dependabot watches Maven, GitHub Actions and Docker (Java major bumps are ignored on purpose). Actions are pinned to major versions, not to commit SHAs.
 
 ### Phase 8: Deployment (1-2 days)
-- [ ] Managed Postgres on Neon
-- [ ] Image deployment on Render, environment variables, `/actuator/health/liveness` as health check (it does not query the database, so it does not keep Neon awake)
+- [x] Managed Postgres on Neon
+- [x] Image deployment on Render, environment variables, `/actuator/health/liveness` as health check (it does not query the database, so it does not keep Neon awake)
 - [ ] Automatic deploy after CI passes
-- [ ] Demo data and a test user documented; rotate the seeded demo admin password (`V3__seed_demo_data.sql` is demo-only)
-- **Status:** the guide ([DEPLOY.md](DEPLOY.md)) and the verification script are done and tested locally; the actual deployment needs the owner's Render and Neon accounts.
+- [x] Demo data and a test user documented; rotate the seeded demo admin password (`V3__seed_demo_data.sql` is demo-only)
+- **Status:** deployed at https://space-booking-api-dtam.onrender.com. `live-check.sh` passes against it, including the check that the public demo admin password was rotated. Pending: the automatic deploy job (needs the `RENDER_DEPLOY_HOOK_URL` secret).
 - **Done when:** I open the public Swagger and complete a full flow (sign up, log in, book, cancel).
 
 ### Phase 9: Presentation (1-2 days)
